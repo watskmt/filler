@@ -16,10 +16,6 @@ jobs:
           COMMIT_MSG: ${{ github.event.head_commit.message }}
           COMMIT_URL: ${{ github.event.head_commit.url }}
         run: |
-          PAYLOAD=$(jq -n \
-            --arg text "*${ACTOR}* pushed to \`${REF_NAME}\` in ${REPO}
->${COMMIT_MSG}
-<${COMMIT_URL}|View commit>" \
-            '{text: $text}')
-          curl -sf -X POST -H 'Content-type: application/json' \
-            --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
+          TEXT=$(printf '*%s* pushed to `%s` in %s\n>%s\n<%s|View commit>' "$ACTOR" "$REF_NAME" "$REPO" "$COMMIT_MSG" "$COMMIT_URL")
+          PAYLOAD=$(jq -n --arg text "$TEXT" '{text: $text}')
+          curl -sf -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
