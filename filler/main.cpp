@@ -1,5 +1,7 @@
 #include "DxLib.h"
 
+int fill(int x, int y, unsigned int color);
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	SetGraphMode(300, 300, 32);      // 画面サイズを300x300に設定
@@ -23,3 +25,5 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	return 0;
 }
+
+int fill(int x, int y, unsigned int color) { return 0; }
