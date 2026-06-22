@@ -45,8 +45,31 @@ int outofBounds1(int x, int y) {
 
 int fill1(int x, int y, unsigned int color) {
 	// ここに塗りつぶしロジックを作成
+	unsigned int wall = GetColor(0, 255, 0);
+
+	// 範囲外
+	if (outofBounds1(x, y))
+		return 0;
+
+	// 壁
+	if (GetPixel1(x, y) == wall)
+		return 0;
+
+	// 既に塗った
+	if (GetPixel1(x, y) == color)
+		return 0;
+
+	DrawPixel1(x, y, color);
+	DrawCells();
+
+	fill1(x + 1, y, color);
+	fill1(x - 1, y, color);
+	fill1(x, y + 1, color);
+	fill1(x, y - 1, color);
+
 	return 0;
 }
+
 
 // GetPixel の代わりに使用
 unsigned int GetPixel1(int x, int y) {
