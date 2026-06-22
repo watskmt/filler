@@ -33,6 +33,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	return 0;
 } 
 
+// x､yが範囲内かを返す
 int outofBounds1(int x, int y) {
 	if (x < 0 || x >= XSIZE || y < 0 || y >= YSIZE) return 1; // 範囲外の場合は1を返す
 	return 0; // 範囲内の場合は0を返す
@@ -41,19 +42,24 @@ int outofBounds1(int x, int y) {
 
 
 int fill1(int x, int y, unsigned int color) {
+	// ここに塗りつぶしロジックを作成
 	return 0;
 }
 
+// GetPixel の代わりに使用
 unsigned int GetPixel1(int x, int y) {
 	if (x < 0 || x >= XSIZE || y < 0 || y >= YSIZE) return -1; // 範囲外の場合は-1を返す
 	return cells[y][x]; // セルの値を返す
 }
 
+// DrawPixelの代わりに使用
 void DrawPixel1(int x, int y, unsigned int color) {
 	if (x < 0 || x >= XSIZE || y < 0 || y >= YSIZE) return; // 範囲外の場合は何もしない
 	cells[y][x] = color; // セルに値を設定
 }
 
+//途中で画面に反映したいときに呼び出す
+// cells を更新したときに呼び出すと画面に反映される
 void DrawCells() {
 	for (int y = 0; y < YSIZE; y++) {
 		for (int x = 0; x < XSIZE; x++) {
