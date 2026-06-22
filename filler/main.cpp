@@ -2,28 +2,74 @@
 
 int fill(int x, int y, unsigned int color);
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+    LPSTR lpCmdLine, int nCmdShow)
 {
-	SetGraphMode(300, 300, 32);      // 画面サイズを300x300に設定
+    SetGraphMode(300, 300, 32);
 
-	if (DxLib_Init() == -1)
-	{
-		return -1;
-	}
-	ChangeWindowMode(TRUE);          // ウィンドウモードに設定（フルスクリーンにしない）
+    ChangeWindowMode(TRUE);
 
-	SetDrawScreen(DX_SCREEN_BACK);
+    if (DxLib_Init() == -1)
+    {
+        return -1;
+    }
 
-	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0)
-	{
-		ClearDrawScreen();
-		DrawBox(100, 100, 199, 199, GetColor(255, 255, 255), FALSE); // 300x300の四角の枠を描画
-		ScreenFlip();
-	}
+    SetDrawScreen(DX_SCREEN_BACK);
 
-	DxLib_End();
+   
+    ClearDrawScreen();
 
-	return 0;
+    DrawBox(100, 100, 199, 199,
+        GetColor(255, 255, 255), FALSE);
+
+    
+    fill(150, 150, GetColor(255, 0, 0));
+
+    ScreenFlip();
+
+    
+    while (ProcessMessage() == 0 &&
+        CheckHitKey(KEY_INPUT_ESCAPE) == 0)
+    {
+        Sleep(10);
+    }
+
+    DxLib_End();
+
+    return 0;
 }
 
-int fill(int x, int y, unsigned int color) { return 0; }
+int fill(int x, int y, unsigned int color)
+{
+    
+    if (x < 0 || x >= 300 || y < 0 || y >= 300)
+    {
+        return 0;
+    }
+
+    
+    unsigned int now = GetPixel(x, y);
+
+    
+    if (now == GetColor(255, 255, 255))
+    {
+        return 0;
+    }
+
+   
+    if (now == color)
+    {
+        return 0;
+    }
+
+ 
+    DrawPixel(x, y, color);
+
+    
+    fill(x + 1, y, color);
+    fill(x - 1, y, color);
+    fill(x, y + 1, color);
+    fill(x, y - 1, color);
+
+    return 0;
+}
