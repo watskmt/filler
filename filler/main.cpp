@@ -45,6 +45,21 @@ int outofBounds1(int x, int y) {
 
 int fill1(int x, int y, unsigned int color) {
 	// ここに塗りつぶしロジックを作成
+	if (outofBounds1(x,y)) {
+		return 0;
+	}
+	if (GetPixel1(x, y) == color) {
+		return 0;
+	}
+
+	DrawPixel1(x, y, color);
+	DrawCells();
+
+	fill1(x, y + 1, color);
+	fill1(x, y - 1, color);
+	fill1(x + 1, y, color);
+	fill1(x - 1, y, color);
+
 	return 0;
 }
 
