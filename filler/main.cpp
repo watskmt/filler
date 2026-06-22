@@ -11,6 +11,7 @@ int outofBounds1(int x, int y);
 unsigned int GetPixel1(int x, int y);
 void DrawPixel1(int x, int y, unsigned int color);
 int fill1(int x, int y, unsigned int color);
+void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color);
 void DrawCells();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
@@ -25,6 +26,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ClearDrawScreen();
 
+	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0)); // (50, 50)から(200, 200)の範囲に緑色の四角を描画
 	fill1(15, 15, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
 	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
 
@@ -67,4 +69,28 @@ void DrawCells() {
 		}
 	}
 	WaitTimer(100);
+}
+void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color) {
+
+	// クリップ
+	if (x1 < 0) x1 = 0;
+	if (y1 < 0) y1 = 0;
+	if (x2 >= XSIZE) x2 = XSIZE - 1;
+	if (y2 >= YSIZE) y2 = YSIZE - 1;
+
+	// 無効な矩形は何もしない
+	if (x1 > x2 || y1 > y2) return;
+
+	// 直接 cells に色をセット（DrawPixel1 を経由せずに高速に設定）
+	for (int x = x1; x <= x2; x++)
+		cells[y1][x] = color;
+	for (int x = x1; x <= x2; x++)
+		cells[y2][x] = color;
+	for (int y = y1; y <= y2; y++)
+		cells[y][x1] = color;
+	for (int y = y1; y <= y2; y++)
+		cells[y][x2] = color;
+
+	// 変更を画面に反映する場合は DrawCells() を呼ぶ
+	DrawCells();
 }
