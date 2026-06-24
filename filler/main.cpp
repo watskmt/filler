@@ -1,4 +1,6 @@
 #include "DxLib.h"
+#include <queue>
+
 #define XSIZE 25
 #define YSIZE 25
 #define WINDOW_WIDTH 400
@@ -9,11 +11,16 @@ int cells[YSIZE][XSIZE] = { 0 };
 int outofBounds1(int x, int y);
 unsigned int GetPixel1(int x, int y);
 void DrawPixel1(int x, int y, unsigned int color);
-int fill1(int x, int y, unsigned int color);
+int fill1(int x, int y, unsigned int color, unsigned int targetColor);
 void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color);
 void DrawCells();
 
-int mx, my;
+void GenerateMaze(unsigned int pathColor, unsigned int wallColor);
+void InitializeMaze(unsigned int wallColor);
+void CarvePath(int x, int y, unsigned int pathColor, unsigned int wallColor);
+bool IsVisited(int x, int y, unsigned int pathColor);
+void CreateRooms(unsigned int pathColor);
+void CarveRoom(int x, int y, int width, int height, unsigned int roomColor);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -25,22 +32,24 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	SetMouseDispFlag(TRUE);
 	ClearDrawScreen();
 
-	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0));
+	unsigned int pathColor = GetColor(0, 0, 0);
+	unsigned int wallColor = GetColor(0, 0, 255);
 
-	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0)
-	{
-		if (GetMouseInput() & MOUSE_INPUT_LEFT)
-		{
-			GetMousePoint(&mx, &my);
+	GenerateMaze(pathColor, wallColor);
+	CreateRooms(pathColor);
+	DrawCells();
 
-			int cx = mx / (WINDOW_WIDTH / XSIZE);
-			int cy = my / (WINDOW_HEIGHT / YSIZE);
+	while ((GetMouseInput() & MOUSE_INPUT_LEFT) == 0);
 
-			fill1(cx, cy, GetColor(255, 0, 0));
+	int x0, y0;
+	GetMousePoint(&x0, &y0);
+	x0 = x0 * XSIZE / WINDOW_WIDTH;
+	y0 = y0 * YSIZE / WINDOW_HEIGHT;
 
-			DrawCells();
-		}
-	}
+	unsigned int targetColor = GetPixel1(x0, y0);
+	fill1(x0, y0, GetColor(255, 0, 0), targetColor);
+
+	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
 
 	DxLib_End();
 	return 0;
@@ -52,20 +61,32 @@ int outofBounds1(int x, int y)
 	return 0;
 }
 
-int fill1(int x, int y, unsigned int color)
+int fill1(int x, int y, unsigned int color, unsigned int targetColor)
 {
 	if (outofBounds1(x, y)) return 0;
-	if (GetPixel1(x, y) == GetColor(0, 255, 0)) return 0;
-	if (GetPixel1(x, y) == color) return 0;
+	if (cells[y][x] != targetColor) return 0;
 
-	DrawPixel1(x, y, color);
-	DrawCells();
-	WaitTimer(10);
+	std::queue<std::pair<int, int>> que;
+	que.push({ x, y });
 
-	fill1(x + 1, y, color);
-	fill1(x - 1, y, color);
-	fill1(x, y + 1, color);
-	fill1(x, y - 1, color);
+	while (!que.empty())
+	{
+		int cx = que.front().first;
+		int cy = que.front().second;
+		que.pop();
+
+		if (outofBounds1(cx, cy)) continue;
+		if (cells[cy][cx] != targetColor) continue;
+
+		cells[cy][cx] = color;
+		DrawCells();
+		ScreenFlip();
+
+		que.push({ cx + 1, cy });
+		que.push({ cx - 1, cy });
+		que.push({ cx, cy + 1 });
+		que.push({ cx, cy - 1 });
+	}
 
 	return 0;
 }
@@ -111,4 +132,78 @@ void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color)
 	for (int y = y1; y <= y2; y++) cells[y][x2] = color;
 
 	DrawCells();
+}
+
+void InitializeMaze(unsigned int wallColor)
+{
+	for (int y = 0; y < YSIZE; y++)
+		for (int x = 0; x < XSIZE; x++)
+			cells[y][x] = wallColor;
+}
+
+bool IsVisited(int x, int y, unsigned int pathColor)
+{
+	if (outofBounds1(x, y)) return true;
+	return cells[y][x] == pathColor;
+}
+
+void CarvePath(int x, int y, unsigned int pathColor, unsigned int wallColor)
+{
+	cells[y][x] = pathColor;
+
+	int dx[] = { 0, 0, -1, 1 };
+	int dy[] = { -1, 1, 0, 0 };
+
+	for (int i = 0; i < 4; i++)
+	{
+		int j = GetRand(3 - i) + i;
+		int tmp_dx = dx[i], tmp_dy = dy[i];
+		dx[i] = dx[j]; dy[i] = dy[j];
+		dx[j] = tmp_dx; dy[j] = tmp_dy;
+	}
+
+	for (int i = 0; i < 4; i++)
+	{
+		int nx = x + dx[i] * 2;
+		int ny = y + dy[i] * 2;
+
+		if (!outofBounds1(nx, ny) && cells[ny][nx] == wallColor)
+		{
+			cells[y + dy[i]][x + dx[i]] = pathColor;
+			CarvePath(nx, ny, pathColor, wallColor);
+		}
+	}
+}
+
+void GenerateMaze(unsigned int pathColor, unsigned int wallColor)
+{
+	InitializeMaze(wallColor);
+	CarvePath(1, 1, pathColor, wallColor);
+	cells[1][1] = pathColor;
+	cells[YSIZE - 2][XSIZE - 2] = pathColor;
+}
+
+void CreateRooms(unsigned int pathColor)
+{
+	int numRooms = 6;
+	int roomSizes[] = { 2, 3, 4 };
+
+	for (int i = 0; i < numRooms; i++)
+	{
+		int width = roomSizes[GetRand(1)];
+		int height = roomSizes[GetRand(1)];
+		int x = GetRand((XSIZE - width) / 2) * 2 + 1;
+		int y = GetRand((YSIZE - height) / 2) * 2 + 1;
+
+		if (x + width <= XSIZE && y + height <= YSIZE)
+			CarveRoom(x, y, width, height, pathColor);
+	}
+}
+
+void CarveRoom(int x, int y, int width, int height, unsigned int pathColor)
+{
+	for (int py = y; py < y + height; py++)
+		for (int px = x; px < x + width; px++)
+			if (!outofBounds1(px, py))
+				cells[py][px] = pathColor;
 }
