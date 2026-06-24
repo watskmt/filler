@@ -1,0 +1,21 @@
+name: Slack Commit Notification
+
+on:
+  push:
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify Slack
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          ACTOR: ${{ github.actor }}
+          REF_NAME: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+          COMMIT_MSG: ${{ github.event.head_commit.message }}
+          COMMIT_URL: ${{ github.event.head_commit.url }}
+        run: |
+          TEXT=$(printf '*%s* pushed to `%s` in %s\n>%s\n<%s|View commit>' "$ACTOR" "$REF_NAME" "$REPO" "$COMMIT_MSG" "$COMMIT_URL")
+          PAYLOAD=$(jq -n --arg text "$TEXT" '{text: $text}')
+          curl -sf -X POST -H 'Content-type: application/json' --data "$PAYLOAD" "$SLACK_WEBHOOK_URL"
