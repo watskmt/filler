@@ -45,31 +45,25 @@ int outofBounds1(int x, int y) {
 
 int fill1(int x, int y, unsigned int color)
 {
-	// 範囲外なら終了
 	if (outofBounds1(x, y))
 	{
 		return 0;
 	}
 
-	// 緑色の枠なら終了
 	if (GetPixel1(x, y) == GetColor(0, 255, 0))
 	{
 		return 0;
 	}
 
-	// 既に塗っていたら終了
 	if (GetPixel1(x, y) == color)
 	{
 		return 0;
 	}
 
-	// 現在の場所を塗る
 	DrawPixel1(x, y, color);
 
-	// 画面を更新
 	DrawCells();
 
-	// 上下左右へ広げる
 	fill1(x + 1, y, color);
 	fill1(x - 1, y, color);
 	fill1(x, y + 1, color);
