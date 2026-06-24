@@ -17,12 +17,12 @@ void DrawCells();
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	SetGraphMode(WINDOW_WIDTH, WINDOW_HEIGHT, 32);      // 画面サイズをWINDOW_WIDTHxWINDOW_HEIGHTに設定
+	ChangeWindowMode(TRUE);          // ウィンドウモードに設定（フルスクリーンにしない）
 
 	if (DxLib_Init() == -1)
 	{
 		return -1;
 	}
-	ChangeWindowMode(TRUE);          // ウィンドウモードに設定（フルスクリーンにしない）
 
 	ClearDrawScreen();
 
@@ -51,23 +51,23 @@ int fill(int x, int y, unsigned int color) {
 	return 0;
 }
 
-//int fill1(int x, int y, unsigned int color) {
-//	// ここに塗りつぶしロジックを作成
-//
-//	// 例
-//	DrawPixel1(x, y, color);
-//	while (!outofBounds1(x + 1, y))
-//	{
-//		DrawPixel1(x++, y, color);
-//		DrawCells();
-//	}
-//
-//	return 0;
-//}
-
-
 int fill1(int x, int y, unsigned int color) {
-	// ここに塗りつぶしロジックを作成
+	if (outofBounds1(x, y) == 1) return 0;
+
+	unsigned int currentColor = GetPixel1(x, y);
+
+	if (currentColor == color) return 0;
+
+	if (currentColor != 0) return 0;
+
+	DrawPixel1(x, y, color);
+
+	DrawCells();
+
+	fill1(x, y - 1, color); // 上
+	fill1(x, y + 1, color); // 下
+	fill1(x - 1, y, color); // 左
+	fill1(x + 1, y, color); // 右
 	return 0;
 }
 
