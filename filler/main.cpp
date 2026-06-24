@@ -27,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ClearDrawScreen();
 
 	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0)); // (50, 50)から(200, 200)の範囲に緑色の四角を描画
-	fill1(15, 15, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
+	fill1(6, 6, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
 	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
 
 	DxLib_End();
@@ -45,6 +45,25 @@ int outofBounds1(int x, int y) {
 
 int fill1(int x, int y, unsigned int color) {
 	// ここに塗りつぶしロジックを作成
+	if (outofBounds1(x, y)) {
+		return 0;
+	}
+
+	unsigned int Cr = GetPixel1(x, y);
+
+	// 壁かすでに塗った場所なら終了
+	if (Cr == GetColor(0, 255, 0) || Cr == color){
+		return 0;
+	}
+
+	DrawPixel1(x, y, color);
+	DrawCells();
+
+	fill1(x + 1, y, color);
+	fill1(x, y + 1, color);
+	//fill1(x - 1, y, color);
+	//fill1(x, y - 1, color);
+
 	return 0;
 }
 
