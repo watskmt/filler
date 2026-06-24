@@ -188,13 +188,13 @@ void GenerateMaze() {
 
 // 迷路内に複数の部屋を作成（2x2, 2x3, 3x2, 3x3のサイズのみ）
 void CreateRooms() {
-	int numRooms = 6; // 部屋の数を増やす
-	int roomSizes[] = { 2, 3, 4 }; // 使用可能なサイズ
+	int numRooms = 10; // 部屋の数を増やす
+	int roomSizes[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 }; // 使用可能なサイズ
 
 	for (int i = 0; i < numRooms; i++) {
 		// ランダムなサイズを選択
-		int width = roomSizes[GetRand(1)];
-		int height = roomSizes[GetRand(1)];
+		int width = roomSizes[GetRand((int)(sizeof(roomSizes) / sizeof(roomSizes[0])) - 1)];
+		int height = roomSizes[GetRand((int)(sizeof(roomSizes) / sizeof(roomSizes[0])) - 1)];
 
 		// ランダムな配置位置（奇数座標に配置して壁を保つ）
 		int x = GetRand((XSIZE - width) / 2) * 2 + 1;
