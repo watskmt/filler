@@ -13,6 +13,7 @@ void DrawPixel1(int x, int y, unsigned int color);
 int fill1(int x, int y, unsigned int color);
 void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color);
 void DrawCells();
+int GetClickPos(int& x, int& y);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -23,12 +24,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 	ChangeWindowMode(TRUE);          // ウィンドウモードに設定（フルスクリーンにしない）
+	SetMouseDispFlag(TRUE);
+
+	int x, y;
 
 	ClearDrawScreen();
 
 	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0)); // (50, 50)から(200, 200)の範囲に緑色の四角を描画
-	fill1(15, 15, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
-	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
+	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0) {
+		if (GetClickPos(x, y))
+		{
+			fill1(x, y, GetColor(255, 0, 0));
+		}
+	}
 
 	DxLib_End();
 
@@ -110,4 +118,18 @@ void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color) {
 
 	// 変更を画面に反映する場合は DrawCells() を呼ぶ
 	DrawCells();
+}
+
+//クリック座標取得
+int GetClickPos(int& x, int& y) {
+	int mouseX, mouseY;
+
+	if ((GetMouseInput() & MOUSE_INPUT_LEFT) != 0)
+	{
+			GetMousePoint(&mouseX, &mouseY);
+			x = mouseX / (WINDOW_WIDTH / XSIZE);
+			y = mouseY / (WINDOW_HEIGHT / YSIZE);
+			return 1;
+	}
+	return 0;
 }
