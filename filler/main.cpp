@@ -31,6 +31,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 		return -1;
 	}
 	ChangeWindowMode(TRUE);          // ウィンドウモードに設定（フルスクリーンにしない）
+	SetMouseDispFlag(TRUE); // マウスポインタを表示する
 
 	ClearDrawScreen();
 
@@ -44,6 +45,13 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	int x0 = 1; // 塗りつぶしの起点のx座標
 	int y0 = 1; // 塗りつぶしの起点のy座標
 	unsigned int targetColor = GetPixel1(x0, y0);
+
+	while ((GetMouseInput() & MOUSE_INPUT_LEFT) == 0);
+
+	GetMousePoint(&x0, &y0); // マウスの位置を取得
+	x0 = x0 * XSIZE / WINDOW_WIDTH; // マウスのx座標をセル座標に変換
+	y0 = y0 * YSIZE / WINDOW_HEIGHT; // マウスのy座標をセル座標に変換
+
 	fill1(x0, y0, GetColor(255, 0, 0), targetColor); // 起点を赤色で塗りつぶす
 
 	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
