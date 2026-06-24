@@ -25,36 +25,72 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	if (DxLib_Init() == -1)
 	{
 		return -1;
-	}          
+	}
 	SetMouseDispFlag(TRUE);
-	SetDrawScreen(DX_SCREEN_BACK);
-	 
+	//SetDrawScreen(DX_SCREEN_BACK);
+	if (GetMouseInput() & MOUSE_INPUT_LEFT)
+	{
+		GetMousePoint(&mx, &my);
+
+		int cx = mx / (WINDOW_WIDTH / XSIZE);
+		int cy = my / (WINDOW_HEIGHT / YSIZE);
+
+		fill1(cx, cy, GetColor(255, 0, 0));
+
+		DrawCells();
+	}
 
 	ClearDrawScreen();
 
 	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0)); // (50, 50)から(200, 200)の範囲に緑色の四角を描画
-	fill1(15, 15, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
-	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
+
+	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0));
+
+	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0) {
+		if (GetMouseInput() & MOUSE_INPUT_LEFT) {
+			GetMousePoint(&mx, &my);
+
+			int cx = mx / (WINDOW_WIDTH / XSIZE);
+			int cy = my / (WINDOW_HEIGHT / YSIZE);
+
+			fill1(cx, cy, GetColor(255, 0, 0));
+
+			DrawCells();
+		}
+
+	}
 
 	DxLib_End();
-
 	return 0;
-} 
+}
 
 // x､yが範囲内かを返す
 int outofBounds1(int x, int y) {
 	if (x < 0 || x >= XSIZE || y < 0 || y >= YSIZE) return 1; // 範囲外の場合は1を返す
 	return 0; // 範囲内の場合は0を返す
 }
-int fill(int x, int y, unsigned int cr){
-	DrawPixel(x, y, cr);
-	return 0;
-}
-
-
 
 int fill1(int x, int y, unsigned int color) {
 	// ここに塗りつぶしロジックを作成
+	if (outofBounds1(x, y))
+		return 0;
+
+	if (GetPixel1(x, y) == GetColor(0, 255, 0))
+		return 0;
+
+	if (GetPixel1(x, y) == color)
+		return 0;
+
+	DrawPixel1(x, y, color);
+	DrawCells();
+	WaitTimer(10);
+
+	fill1(x + 1, y, color);
+	fill1(x - 1, y, color);
+	fill1(x, y + 1, color);
+	fill1(x, y - 1, color);
+
+
 	return 0;
 }
 
@@ -83,7 +119,7 @@ void DrawCells() {
 }
 void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color) {
 
-	// クリップ
+	// クリック
 	if (x1 < 0) x1 = 0;
 	if (y1 < 0) y1 = 0;
 	if (x2 >= XSIZE) x2 = XSIZE - 1;
