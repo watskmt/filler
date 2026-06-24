@@ -27,7 +27,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 	ClearDrawScreen();
 
 	DrawBox1(5, 5, 20, 20, GetColor(0, 255, 0)); // (50, 50)から(200, 200)の範囲に緑色の四角を描画
-	fill1(15, 15, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす
+	fill1(19, 19, GetColor(255, 0, 0)); // (150, 150)を起点に赤色で塗りつぶす 
 	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
 
 	DxLib_End();
@@ -51,7 +51,32 @@ int fill1(int x, int y, unsigned int color) {
 	if (GetPixel1(x, y) != 0)
 		return 0;
 
-	DrawPixel1(x, y, color);
+	// スマイリーの目と口
+	if (
+		// 左目
+		(x >= 9 && x <= 10 && y >= 9 && y <= 10)
+
+		||
+
+		// 右目
+		(x >= 15 && x <= 16 && y >= 9 && y <= 10)
+
+		||
+
+		// 口
+		(y == 16 && x >= 10 && x <= 15)
+
+		||
+
+		(y == 15 && (x == 9 || x == 16))
+		)
+	{
+		DrawPixel1(x, y, GetColor(0, 0, 0));
+	}
+	else
+	{
+		DrawPixel1(x, y, GetColor(255, 255, 255));
+	}
 	DrawCells();
 
 	fill1(x + 1, y, color);
@@ -82,7 +107,7 @@ void DrawCells() {
 			DrawBox(x * (WINDOW_WIDTH / XSIZE), y * (WINDOW_HEIGHT / YSIZE), (x + 1) * (WINDOW_WIDTH / XSIZE) - 1, (y + 1) * (WINDOW_HEIGHT / YSIZE) - 1, cells[y][x], TRUE); // セルの値を描画
 		}
 	}
-	WaitTimer(100);
+	WaitTimer(50);
 }
 void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color) {
 
