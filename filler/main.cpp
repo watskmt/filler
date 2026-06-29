@@ -64,7 +64,7 @@ int outofBounds1(int x, int y)
 int fill1(int x, int y, unsigned int color, unsigned int targetColor)
 {
 	if (outofBounds1(x, y)) return 0;
-	if (cells[y][x] != targetColor) return 0;
+	if (cells[y][x] != targetColor) return 0	;
 
 	std::queue<std::pair<int, int>> que;
 	que.push({ x, y });
@@ -80,7 +80,7 @@ int fill1(int x, int y, unsigned int color, unsigned int targetColor)
 
 		cells[cy][cx] = color;
 		DrawCells();
-		ScreenFlip();
+		WaitTimer(0);
 
 		que.push({ cx + 1, cy });
 		que.push({ cx - 1, cy });
@@ -114,7 +114,7 @@ void DrawCells()
 				cells[y][x], TRUE);
 		}
 	}
-	WaitTimer(100);
+	
 	ScreenFlip();
 }
 
