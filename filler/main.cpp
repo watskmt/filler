@@ -74,7 +74,7 @@ int outofBounds1(int x, int y) {
 
 int fill1(int x, int y, unsigned int color, unsigned int targetColor) {
 	// ここに塗りつぶしロジックを作成
-	unsigned int wall = GetColor(0, 255, 0);
+	unsigned int wall = GetColor(0, 0, 255);
 
 	// 範囲外
 	if (outofBounds1(x, y))
@@ -91,10 +91,10 @@ int fill1(int x, int y, unsigned int color, unsigned int targetColor) {
 	DrawPixel1(x, y, color);
 	DrawCells();
 
-	fill1(x + 1, y, color);
-	fill1(x - 1, y, color);
-	fill1(x, y + 1, color);
-	fill1(x, y - 1, color);
+	fill1(x + 1, y, color, targetColor);
+	fill1(x - 1, y, color, targetColor);
+	fill1(x, y + 1, color,targetColor);
+	fill1(x, y - 1, color, targetColor);
 
 	return 0;
 }
