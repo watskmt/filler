@@ -1,4 +1,4 @@
-#include "DxLib.h"
+﻿#include "DxLib.h"
 #define XSIZE 25
 #define YSIZE 25
 #define WINDOW_WIDTH 400
@@ -18,17 +18,17 @@ void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color);
 void DrawCells();
 
 // 迷路生成関数の宣言
-void GenerateMaze();
-void InitializeMaze();
-void CarvePath(int x, int y);
-bool IsVisited(int x, int y);
-void CreateRooms();
-void CarveRoom(int x, int y, int width, int height);
+void GenerateMaze(unsigned int pathColor, unsigned int wallColor);
+void InitializeMaze(unsigned int wallColor);
+void CarvePath(int x, int y, unsigned int pathColor, unsigned int wallColor);
+bool IsVisited(int x, int y, unsigned int pathColor);
+void CreateRooms(unsigned int pathColor);
+void CarveRoom(int x, int y, int width, int height, unsigned int roomColor);
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
 	SetGraphMode(WINDOW_WIDTH, WINDOW_HEIGHT, 32);      // 画面サイズをWINDOW_WIDTHxWINDOW_HEIGHTに設定
-
+	ChangeWindowMode(TRUE);
 	if (DxLib_Init() == -1)
 	{
 		return -1;
@@ -38,26 +38,32 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	ClearDrawScreen();
 
-	pathColor = GetColor(0, 0, 0);
-	wallColor = GetColor(0, 0, 255);
+unsigned int pathColor = GetColor(0, 0, 0);
+unsigned int wallColor = GetColor(0, 0, 255);
 
-	GenerateMaze(); // 迷路を生成
-	CreateRooms(); // 部屋を作成
-	DrawCells();
+GenerateMaze(pathColor, wallColor); // 迷路を生成
+CreateRooms(pathColor);             // 部屋を作成
+DrawCells();
 
-	int x0 = 1; // 塗りつぶしの起点のx座標
-	int y0 = 1; // 塗りつぶしの起点のy座標
-	unsigned int targetColor = GetPixel1(x0, y0);
+while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0)
+{
+    if (GetMouseInput() & MOUSE_INPUT_LEFT)
+    {
+        int mx, my;
+        GetMousePoint(&mx, &my);
 
-	while ((GetMouseInput() & MOUSE_INPUT_LEFT) == 0);
+        // マウス座標 → セル座標
+        int x = mx / (WINDOW_WIDTH / XSIZE);
+        int y = my / (WINDOW_HEIGHT / YSIZE);
 
-	GetMousePoint(&x0, &y0); // マウスの位置を取得
-	x0 = x0 * XSIZE / WINDOW_WIDTH; // マウスのx座標をセル座標に変換
-	y0 = y0 * YSIZE / WINDOW_HEIGHT; // マウスのy座標をセル座標に変換
+        // クリックした場所の色を取得
+        unsigned int targetColor = GetPixel1(x, y);
 
-	fill1(x0, y0, GetColor(255, 0, 0), targetColor); // 起点を赤色で塗りつぶす
+        // クリックした場所から塗りつぶし
+        fill1(x, y, GetColor(255, 0, 0), targetColor);
+    }
 
-	while (ProcessMessage() == 0 && CheckHitKey(KEY_INPUT_ESCAPE) == 0);
+    DrawCells();
 
 	DxLib_End();
 
@@ -70,10 +76,31 @@ int outofBounds1(int x, int y) {
 	return 0; // 範囲内の場合は0を返す
 }
 
-
-
-int fill1(int x, int y, unsigned int color, unsigned int targetColor) {
+int fill1(int x, int y, unsigned int color, unsigned int targetColor)
+{
 	// ここに塗りつぶしロジックを作成
+
+	if (outofBounds1(x, y))
+		return 0;
+
+	// 開始地点と同じ色だけ塗る
+	if (GetPixel1(x, y) != targetColor)
+		return 0;
+
+	// 既に塗った場所は終了
+	if (GetPixel1(x, y) == color)
+		return 0;
+
+	// 例
+	DrawPixel1(x, y, color);
+
+	DrawCells();
+
+	fill1(x + 1, y, color, targetColor);
+	fill1(x - 1, y, color, targetColor);
+	fill1(x, y + 1, color, targetColor);
+	fill1(x, y - 1, color, targetColor);
+
 	return 0;
 }
 
@@ -128,22 +155,23 @@ void DrawBox1(int x1, int y1, int x2, int y2, unsigned int color) {
 
 
 // 迷路を初期化（全て壁で埋める）
-void InitializeMaze() {
+void InitializeMaze(unsigned int wallColor) {
 	for (int y = 0; y < YSIZE; y++) {
 		for (int x = 0; x < XSIZE; x++) {
 			cells[y][x] = wallColor; // wallColor = 壁
 		}
 	}
-}
+
 
 // セルが訪問済みかチェック
-bool IsVisited(int x, int y) {
+
+bool IsVisited(int x, int y, unsigned int pathColor) {
 	if (outofBounds1(x, y)) return true; // 範囲外は訪問済みとみなす
 	return cells[y][x] == pathColor; // pathColor = 通路（訪問済み）
 }
 
 // 迷路を掘る（再帰的バックトラッキング法）
-void CarvePath(int x, int y) {
+void CarvePath(int x, int y, unsigned int pathColor, unsigned int wallColor) {
 	// 現在の位置を通路にする
 	cells[y][x] = pathColor; // pathColor = 通路
 
@@ -171,15 +199,16 @@ void CarvePath(int x, int y) {
 			// 現在と移動先の間の壁を掘る
 			cells[y + dy[i]][x + dx[i]] = pathColor;
 			// 再帰的に移動先から掘り進める
-			CarvePath(nx, ny);
+			CarvePath(nx, ny, pathColor, wallColor);
 		}
 	}
 }
 
 // 迷路を生成するメイン関数
-void GenerateMaze() {
-	InitializeMaze(); // 全て壁で初期化
-	CarvePath(1, 1); // (1, 1) から掘り始める
+
+void GenerateMaze(unsigned int pathColor, unsigned int wallColor) {
+	InitializeMaze(wallColor); // 全て壁で初期化
+	CarvePath(1, 1, pathColor, wallColor); // (1, 1) から掘り始める
 
 	// 開始地点と終了地点を通路にする
 	cells[1][1] = pathColor;
@@ -187,14 +216,14 @@ void GenerateMaze() {
 }
 
 // 迷路内に複数の部屋を作成（2x2, 2x3, 3x2, 3x3のサイズのみ）
-void CreateRooms() {
-	int numRooms = 10; // 部屋の数を増やす
-	int roomSizes[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 }; // 使用可能なサイズ
+void CreateRooms(unsigned int pathColor) {
+	int numRooms = 6; // 部屋の数を増やす
+	int roomSizes[] = { 2, 3, 4 }; // 使用可能なサイズ
 
 	for (int i = 0; i < numRooms; i++) {
 		// ランダムなサイズを選択
-		int width = roomSizes[GetRand((int)(sizeof(roomSizes) / sizeof(roomSizes[0])) - 1)];
-		int height = roomSizes[GetRand((int)(sizeof(roomSizes) / sizeof(roomSizes[0])) - 1)];
+		int width = roomSizes[GetRand(1)];
+		int height = roomSizes[GetRand(1)];
 
 		// ランダムな配置位置（奇数座標に配置して壁を保つ）
 		int x = GetRand((XSIZE - width) / 2) * 2 + 1;
@@ -202,13 +231,14 @@ void CreateRooms() {
 
 		// グリッド上に配置（他の部屋と重なる可能性は無視）
 		if (x + width <= XSIZE && y + height <= YSIZE) {
-			CarveRoom(x, y, width, height);
+			CarveRoom(x, y, width, height, pathColor);
 		}
 	}
 }
 
 // 指定位置に部屋を掘る（x, y は左上座標、width x height のサイズ）
-void CarveRoom(int x, int y, int width, int height) {
+void CarveRoom(int x, int y, int width, int height, unsigned int pathColor) {
+
 	// 部屋の範囲内に pathColor を設定（通路と同じ色）
 	for (int py = y; py < y + height; py++) {
 		for (int px = x; px < x + width; px++) {
