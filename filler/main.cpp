@@ -7,8 +7,8 @@
 
 int cells[YSIZE][XSIZE] = { 0 }; // セルを初期化
 int count = 0;
-unsigned int pathColor;
 unsigned int wallColor;
+unsigned int pathColor;
 
 int outofBounds1(int x, int y);
 unsigned int GetPixel1(int x, int y);
@@ -23,7 +23,9 @@ void InitializeMaze();
 void CarvePath(int x, int y);
 bool IsVisited(int x, int y);
 void CreateRooms();
+struct Node { int x; int y; };
 void CarveRoom(int x, int y, int width, int height);
+void FindShortestPath();
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
@@ -43,6 +45,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
 	GenerateMaze(); // 迷路を生成
 	CreateRooms(); // 部屋を作成
+	DrawCells();
+	FindShortestPath();
 	DrawCells();
 
 	int x0 = 1; // 塗りつぶしの起点のx座標
@@ -120,7 +124,6 @@ void DrawCells() {
 			DrawBox(x * (WINDOW_WIDTH / XSIZE), y * (WINDOW_HEIGHT / YSIZE), (x + 1) * (WINDOW_WIDTH / XSIZE) - 1, (y + 1) * (WINDOW_HEIGHT / YSIZE) - 1, cells[y][x], TRUE); // セルの値を描画
 		}
 	}
-	WaitTimer(100);
 	if (cells[YSIZE - 2][XSIZE - 2] != pathColor)
 		DrawFormatString(WINDOW_WIDTH/2, WINDOW_HEIGHT/2, GetColor(255, 255, 255), "finished %d steps", count);
 }
@@ -211,8 +214,8 @@ void GenerateMaze() {
 
 // 迷路内に複数の部屋を作成（2x2, 2x3, 3x2, 3x3のサイズのみ）
 void CreateRooms() {
-	int numRooms = 10; // 部屋の数を増やす
-	int roomSizes[] = { 2, 3, 4, 5, 6, 7, 8, 9, 10 }; // 使用可能なサイズ
+	int numRooms = 5; // 部屋の数を増やす
+	int roomSizes[] = { 2, 3, 4 }; // 使用可能なサイズ
 
 	for (int i = 0; i < numRooms; i++) {
 		// ランダムなサイズを選択
@@ -240,4 +243,84 @@ void CarveRoom(int x, int y, int width, int height) {
 			}
 		}
 	}
+}
+
+// スタートからゴールまでの最短経路を探す関数（幅優先探索）
+void FindShortestPath()
+{
+	// 探索済みかどうかを記録
+	bool visited[YSIZE][XSIZE] = { false };
+
+	// 1つ前にいたマスを記録
+	Node parent[YSIZE][XSIZE];
+
+	// 探索するマスを順番に入れるキュー
+	Node queue[XSIZE * YSIZE];
+
+	// キューの先頭と最後
+	int head = 0;
+	int tail = 0;
+
+	// スタート地点をキューに追加
+	queue[tail++] = { 1,1 };
+	visited[1][1] = true;
+
+	// 右・左・下・上への移動量
+	int dx[4] = { 1,-1,0,0 };
+	int dy[4] = { 0,0,1,-1 };
+
+	// キューが空になるまで探索
+	while (head != tail)
+	{
+		// キューの先頭を取り出す
+		Node now = queue[head++];
+
+		// ゴールに着いたら終了
+		if (now.x == XSIZE - 2 && now.y == YSIZE - 2)
+			break;
+
+		// 上下左右を調べる
+		for (int i = 0; i < 4; i++)
+		{
+			// 次に調べる座標
+			int nx = now.x + dx[i];
+			int ny = now.y + dy[i];
+
+			// 範囲外なら進まない
+			if (outofBounds1(nx, ny))
+				continue;
+
+			// 探索済みなら進まない
+			if (visited[ny][nx])
+				continue;
+
+			// 壁なら進まない
+			if (cells[ny][nx] == wallColor)
+				continue;
+
+			// 探索済みにする
+			visited[ny][nx] = true;
+
+			// どこから来たかを記録
+			parent[ny][nx] = now;
+
+			// 次に探索するためキューへ追加
+			queue[tail++] = { nx,ny };
+		}
+	}
+
+	// ゴールからスタートへ戻る
+	Node p = { XSIZE - 2, YSIZE - 2 };
+
+	while (!(p.x == 1 && p.y == 1))
+	{
+		// 最短経路を赤色にする
+		cells[p.y][p.x] = GetColor(255, 0, 0);
+
+		// 1つ前のマスへ戻る
+		p = parent[p.y][p.x];
+	}
+
+	// スタート地点も赤色にする
+	cells[1][1] = GetColor(255, 0, 0);
 }
